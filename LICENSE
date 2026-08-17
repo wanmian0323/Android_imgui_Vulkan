@@ -1,0 +1,78 @@
+Android_imgui_Vulkan Non-Commercial License v1.0
+
+Copyright (c) 2026 JZX0323. All rights reserved.
+
+1. Permission
+
+Subject to the terms of this license, the copyright holder grants you a
+worldwide, royalty-free, non-exclusive, non-transferable license to use,
+copy, study, modify, and redistribute this project and derivative works only
+for personal, educational, academic research, evaluation, or other strictly
+non-commercial purposes.
+
+2. Commercial use prohibited
+
+You may not use this project or any derivative work, in whole or in part, for
+any commercial purpose without prior written permission from the copyright
+holder. Commercial use includes, without limitation:
+
+- selling, licensing, renting, or otherwise charging for the project or a
+  derivative work;
+- using it in a paid product, paid service, customer deliverable, consulting
+  engagement, software-as-a-service offering, or other revenue-generating
+  activity;
+- monetizing it through advertising, sponsorship, subscriptions, donations
+  tied to access or functionality, or in-app purchases;
+- using it internally by or for a for-profit organization in support of its
+  business operations, products, services, or commercial research; and
+- removing this restriction by sublicensing or redistributing the project
+  under more permissive terms.
+
+3. Redistribution and modifications
+
+Any permitted redistribution of source code, binary forms, or derivative
+works must:
+
+- include this license and the copyright notice above;
+- clearly identify significant modifications; and
+- apply the same non-commercial restrictions to the redistributed project or
+  derivative work.
+
+4. Separate commercial permission
+
+Commercial use requires a separate written license from the copyright holder.
+No commercial rights are granted by this license.
+
+5. Third-party components
+
+This license applies only to the original portions of Android_imgui_Vulkan
+owned by the copyright holder. Dear ImGui, stb_image, Font Awesome, Android
+SDK/NDK components, and any other third-party materials remain subject to
+their respective copyright notices and license terms. Where a third-party
+license grants broader rights, this license does not restrict those
+third-party materials by themselves.
+
+6. No trademark rights
+
+This license does not grant permission to use any trade name, trademark,
+service mark, or product identity of the copyright holder except as required
+for reasonable attribution.
+
+7. Termination
+
+Your rights under this license terminate automatically if you breach any of
+its terms. Rights may be restored only by express written permission from the
+copyright holder.
+
+8. Disclaimer of warranty and limitation of liability
+
+THE PROJECT IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT
+PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY ARISING FROM OR RELATED TO THE PROJECT OR ITS USE.
+
+Summary: personal, educational, research, and other non-commercial use is
+permitted under these terms. Commercial use requires separate written
+permission. If this summary conflicts with the terms above, the terms above
+control.

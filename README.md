@@ -9,6 +9,10 @@
 ![Vulkan](https://img.shields.io/badge/Renderer-Vulkan-AC162C?logo=vulkan&logoColor=white)
 ![C%2B%2B](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white)
 ![ABI](https://img.shields.io/badge/ABI-arm64--v8a-444444)
+![License](https://img.shields.io/badge/license-non--commercial-red)
+
+> [!WARNING]
+> 本项目仅允许个人、学习、教育、学术研究和其他非商业用途。销售、收费服务、广告或订阅变现、企业内部商业使用，以及任何直接或间接营利用途均被禁止；商业使用必须事先取得版权所有者的书面授权。完整条款见 [LICENSE](LICENSE)。
 
 ## 功能概览
 
@@ -134,6 +138,7 @@ adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
 
 ~~~text
 .
+├── LICENSE
 ├── README.md
 └── jni
     ├── Android.mk                    # NDK 模块、编译选项和源文件清单
@@ -263,7 +268,7 @@ adb shell su -c 'getevent -lp'
 - [Font Awesome](https://fontawesome.com/)：内置图标字体。
 - Android NDK / Vulkan Android WSI：原生构建、Surface 和 GPU 渲染能力。
 
-Dear ImGui、stb_image 和 Font Awesome 的许可条款请以各自上游文件和官方仓库为准。当前项目目录没有独立的 `LICENSE` 文件；对外发布前请补充项目许可，并保留第三方组件的版权与许可声明。
+Dear ImGui、stb_image 和 Font Awesome 的许可条款请以各自上游文件和官方仓库为准。项目原创部分使用自定义非商业许可证，第三方组件仍适用其各自的版权与许可条款。
 
 ## 当前验证记录
 
@@ -277,4 +282,11 @@ Dear ImGui、stb_image 和 Font Awesome 的许可条款请以各自上游文件�
 
 ## License
 
-本项目当前未声明独立许可证。请在分发或二次开发前补充许可证文件，并同时遵守 Dear ImGui、stb_image、Font Awesome 及 Android SDK/NDK 的相应条款。
+本项目原创部分采用 [Android_imgui_Vulkan Non-Commercial License v1.0](LICENSE)：
+
+- 允许个人使用、学习、教育、学术研究、评估和其他严格非商业用途。
+- 允许在保留许可证、版权声明和修改说明的前提下，为上述用途复制、修改和再分发。
+- 禁止销售、付费授权、收费服务、客户交付、SaaS、广告或订阅变现、企业内部商业使用，以及其他直接或间接营利用途。
+- 商业使用必须事先取得版权所有者的单独书面授权。
+
+本许可仅覆盖 `JZX0323` 拥有版权的项目原创部分。Dear ImGui、stb_image、Font Awesome、Android SDK/NDK 及其他第三方内容继续遵循其各自的许可证。
