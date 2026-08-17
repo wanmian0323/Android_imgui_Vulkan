@@ -1,0 +1,16 @@
+# NDK build outputs
+obj/
+libs/
+.cxx/
+build/
+
+# Android/IDE local files
+.gradle/
+.externalNativeBuild/
+local.properties
+*.iml
+
+# Generated packages and logs
+*.apk
+*.aab
+*.log
