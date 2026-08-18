@@ -7,7 +7,7 @@
     .hidden g_heiti_ttf_end
     .type g_heiti_ttf_start, %object
 g_heiti_ttf_start:
-    .incbin "heiti.ttf"
+    .incbin "素材/heiti.ttf"
 g_heiti_ttf_end:
     .size g_heiti_ttf_start, g_heiti_ttf_end - g_heiti_ttf_start
 
@@ -18,7 +18,7 @@ g_heiti_ttf_end:
     .hidden g_picture_jpg_end
     .type g_picture_jpg_start, %object
 g_picture_jpg_start:
-    .incbin "picture.jpg"
+    .incbin "素材/picture.jpg"
 g_picture_jpg_end:
     .size g_picture_jpg_start, g_picture_jpg_end - g_picture_jpg_start
 
@@ -29,7 +29,7 @@ g_picture_jpg_end:
     .hidden g_congyv_gif_end
     .type g_congyv_gif_start, %object
 g_congyv_gif_start:
-    .incbin "congyv.gif"
+    .incbin "素材/congyv.gif"
 g_congyv_gif_end:
     .size g_congyv_gif_start, g_congyv_gif_end - g_congyv_gif_start
 

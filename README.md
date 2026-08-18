@@ -146,7 +146,8 @@ adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
     ├── Application.mk                # ABI、API level 和 STL 配置
     ├── include
     │   ├── Android_draw              # 绘制入口和 UI 声明
-    │   ├── ImGui                     # Dear ImGui、Android backend、触摸、字体、图片和内置资源
+    │   ├── ImGui                     # Dear ImGui、Android backend、触摸和内置资源接口
+    │   ├── 素材                      # heiti.ttf、picture.jpg 和 congyv.gif
     │   └── Vulkan                    # Vulkan 图形抽象、函数加载和 Surface 封装
     └── src
         ├── main.cpp                  # 程序入口和主循环
@@ -155,7 +156,7 @@ adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
         └── Vulkan                    # Vulkan 初始化、渲染、纹理和清理
 ~~~
 
-`jni/include/ImGui/` 中的三个资源文件为：
+`jni/include/素材/` 中的三个资源文件为：
 
 - `heiti.ttf`：中文默认字体，使用 `ImGui::AddFontFromMemoryTTF()`。
 - `picture.jpg`：示例图片，使用 `LoadTextureFromMemory()`。
