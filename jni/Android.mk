@@ -16,30 +16,25 @@ LOCAL_CPPFLAGS += -DIMGUI_DISABLE_DEBUG_TOOLS #禁用imgui调试工具
 #引入头文件到全局#
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/Android_draw
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/Android_Graphics
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/Android_my_imgui
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/Android_touch
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/My_Utils
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/My_Utils/stb_image
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/ImGui
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/ImGui/backends
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/Vulkan
 
 
 
 LOCAL_SRC_FILES := src/main.cpp
 LOCAL_SRC_FILES += src/Android_draw/draw_Gui.cpp
-LOCAL_SRC_FILES += src/Android_touch/TouchHelperA.cpp
-LOCAL_SRC_FILES += src/Android_Graphics/GraphicsManager.cpp
-LOCAL_SRC_FILES += src/Android_Graphics/VulkanGraphics.cpp 
-LOCAL_SRC_FILES += src/Android_Graphics/vulkan_wrapper.cpp
-LOCAL_SRC_FILES += src/Android_my_imgui/AndroidImgui.cpp
-LOCAL_SRC_FILES += src/Android_my_imgui/my_imgui_impl_android.cpp
+LOCAL_SRC_FILES += src/Android_draw/TouchHelperA.cpp
+LOCAL_SRC_FILES += src/Android_draw/AndroidImgui.cpp
+LOCAL_SRC_FILES += src/Android_draw/my_imgui_impl_android.cpp
+LOCAL_SRC_FILES += src/Android_draw/stb_image.cpp
+LOCAL_SRC_FILES += src/Vulkan/GraphicsManager.cpp
+LOCAL_SRC_FILES += src/Vulkan/VulkanGraphics.cpp
+LOCAL_SRC_FILES += src/Vulkan/vulkan_wrapper.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui_draw.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui_tables.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui_widgets.cpp
-LOCAL_SRC_FILES += src/ImGui/backends/imgui_impl_vulkan.cpp
-LOCAL_SRC_FILES += src/My_Utils/stb_image/stb_image.cpp
+LOCAL_SRC_FILES += src/ImGui/imgui_impl_vulkan.cpp
     
 
 

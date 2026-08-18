@@ -144,21 +144,14 @@ adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
     ├── Android.mk                    # NDK 模块、编译选项和源文件清单
     ├── Application.mk                # ABI、API level 和 STL 配置
     ├── include
-    │   ├── Android_draw              # 绘制入口和 UI 声明
-    │   ├── Android_Graphics          # Vulkan 图形抽象和函数加载声明
-    │   ├── Android_my_imgui          # Android ImGui 生命周期封装
-    │   ├── Android_touch             # 触摸、旋转和输入结构
-    │   ├── ImGui                     # Dear ImGui 核心、Vulkan backend 和字体
-    │   ├── My_Utils                  # stb_image 和内置图片资源
-    │   └── native_surface             # SurfaceComposer/ANativeWindow 封装
+    │   ├── Android_draw              # 绘制入口、Android 生命周期和触摸声明
+    │   ├── ImGui                     # Dear ImGui 核心、Vulkan backend、字体和图片
+    │   └── Vulkan                    # Vulkan 图形抽象、函数加载和 Surface 封装
     └── src
         ├── main.cpp                  # 程序入口和主循环
-        ├── Android_draw              # 示例 UI、字体和纹理初始化
-        ├── Android_Graphics          # Vulkan 初始化、渲染、纹理和清理
-        ├── Android_my_imgui          # ImGui context 和 Android backend
-        ├── Android_touch             # /dev/input 与 /dev/uinput 处理
+        ├── Android_draw              # 示例 UI、Android backend、触摸和纹理初始化
         ├── ImGui                     # Dear ImGui 实现和 Vulkan backend
-        └── My_Utils                  # stb_image 实现
+        └── Vulkan                    # Vulkan 初始化、渲染、纹理和清理
 ~~~
 
 ## 二次开发
@@ -246,7 +239,7 @@ adb shell su -c 'ls -l /system/lib64/libgui.so /system/lib64/libutils.so'
 adb logcat -s ImGui AndroidRuntime
 ~~~
 
-如果 ROM 没有当前代码需要的内部符号，需要在 `jni/include/native_surface/ANativeWindowCreator.h` 的 `patchesTable` 中为该 ROM 增加对应 mangled symbol，并重新编译。
+如果 ROM 没有当前代码需要的内部符号，需要在 `jni/include/Android_draw/ANativeWindowCreator.h` 的 `patchesTable` 中为该 ROM 增加对应 mangled symbol，并重新编译。
 
 ### 触摸没有响应
 
@@ -289,4 +282,4 @@ Dear ImGui、stb_image 和 Font Awesome 的许可条款请以各自上游文件�
 - 禁止销售、付费授权、收费服务、客户交付、SaaS、广告或订阅变现、企业内部商业使用，以及其他直接或间接营利用途。
 - 商业使用必须事先取得版权所有者的单独书面授权。
 
-本许可仅覆盖 `JZX0323` 拥有版权的项目原创部分。Dear ImGui、stb_image、Font Awesome、Android SDK/NDK 及其他第三方内容继续遵循其各自的许可证。
+本许可仅覆盖 `wanmian0323` 拥有版权的项目原创部分。Dear ImGui、stb_image、Font Awesome、Android SDK/NDK 及其他第三方内容继续遵循其各自的许可证。

@@ -1,13 +1,13 @@
 #include <chrono>
 
 #include "draw.h"
-#include "My_font/heiti_font.h"
-#include "My_font/fontawesome-brands.h"
-#include "My_font/fontawesome-regular.h"
-#include "My_font/fontawesome-solid.h"
-#include "My_font/gui_icon.h"
+#include "heiti_font.h"
+#include "fontawesome-brands.h"
+#include "fontawesome-regular.h"
+#include "fontawesome-solid.h"
+#include "gui_icon.h"
    
-#include "My_icon/pic_ZhenAiKun_png.h"
+#include "pic_ZhenAiKun_png.h"
 
 bool permeate_record = false;
 bool permeate_record_ini = false;
