@@ -20,6 +20,7 @@ extern int abs_ScreenX, abs_ScreenY;// 绝对屏幕X _ Y
 extern int native_window_screen_x, native_window_screen_y;
 extern TextureInfo picture_image;
 extern TextureInfo_gif congyv_gif;
+extern int gui_frame_rate;
 
 extern ImFont* heiti_font;
 extern ImFont* icon_font_0;

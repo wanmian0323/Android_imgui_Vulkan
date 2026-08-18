@@ -1,5 +1,7 @@
 #include <chrono>
 #include <cstdlib>
+#include <algorithm>
+#include <thread>
 
 #include "draw.h"
 #include "embedded_assets.h"
@@ -22,6 +24,7 @@ int native_window_screen_x = 0, native_window_screen_y = 0;
 
 TextureInfo picture_image{};
 TextureInfo_gif congyv_gif{};
+int gui_frame_rate = 60;
 
 ImFont* heiti_font = NULL;
 ImFont* icon_font_0 = NULL;
@@ -89,7 +92,29 @@ void screen_config() {
     lastTime = std::chrono::steady_clock::now();
 }
 
+static void limit_gui_frame_rate() {
+    static std::chrono::steady_clock::time_point next_frame{};
+    const auto now = std::chrono::steady_clock::now();
+    const int target_fps = std::clamp(gui_frame_rate, 60, 185);
+    const auto frame_period = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+            std::chrono::duration<double>(1.0 / target_fps));
+
+    if (next_frame == std::chrono::steady_clock::time_point{}) {
+        next_frame = now;
+    }
+    if (now < next_frame) {
+        std::this_thread::sleep_until(next_frame);
+    }
+
+    const auto frame_start = std::chrono::steady_clock::now();
+    next_frame += frame_period;
+    if (next_frame <= frame_start) {
+        next_frame = frame_start + frame_period;
+    }
+}
+
 void drawBegin() {
+    limit_gui_frame_rate();
     if (::permeate_record_ini) {
         LastCoordinate.Pos_x = ::g_window->Pos.x;
         LastCoordinate.Pos_y = ::g_window->Pos.y;
@@ -120,13 +145,9 @@ void drawBegin() {
 
 
 void Layout_tick_UI(bool *main_thread_flag) {
-    static bool show_draw_Line = false;
-    static bool show_another_window = false;
+    static bool show_picture_window = false;
+    static bool show_gif_window = false;
     { 
-        static float f = 0.0f;
-        static int counter = 0;
-        static int style_idx = 0;
-        static ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
         ImGui::Begin("晚宀-imgui", main_thread_flag);  // Create a window called "Hello, world!" and append into it.
         if (::permeate_record_ini) {
             ImGui::SetWindowPos({LastCoordinate.Pos_x, LastCoordinate.Pos_y});
@@ -134,45 +155,31 @@ void Layout_tick_UI(bool *main_thread_flag) {
             permeate_record_ini = false;   
         }
         ImGui::Text("渲染接口 : %s, gui版本 : %s", graphics->RenderName, ImGui::GetVersion());               // Display some text (you can use a format strings too)
-		if (ImGui::Combo("##主题", &style_idx, "白色主题\0蓝色主题\0紫色主题\0")) {
-			switch (style_idx) {
-				case 0: ImGui::StyleColorsLight(); break;
-				case 1: ImGui::StyleColorsDark(); break;
-				case 2: ImGui::StyleColorsClassic(); break;
-			}
-		}
-		
-        if (ImGui::Checkbox("过录制 \xef\x8d\xa8 \xef\x91\x9f \xef\x9a\xad", &::permeate_record)) {
+        if (ImGui::Checkbox("过录制", &::permeate_record)) {
             ::permeate_record_ini = true;
         }
             
-        ImGui::Checkbox("绘制射线", &show_draw_Line);
-        ImGui::Checkbox("图片与 GIF 窗口", &show_another_window);
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit4("取色器", (float *) &clear_color); // Edit 3 floats representing a color
-        if (ImGui::Button("Button")) {
-            counter++;
-        }
-        
-        ImGui::SameLine();
-        ImGui::Text("计数 = %d", counter);
-        ImGui::Text("窗口集中 = %d", ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow));
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "应用平均 %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Checkbox("绘制图片", &show_picture_window);
+        ImGui::Checkbox("绘制 GIF", &show_gif_window);
+        ImGui::SliderInt("GUI 帧率", &gui_frame_rate, 60, 185, "%d FPS");
         g_window = ImGui::GetCurrentWindow();
         ImGui::End();
     }
     
         
-    if (show_another_window) { // 3. Show another simple window.
-        ImGui::Begin("另一个窗口", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+    if (show_picture_window) {
+        ImGui::Begin("图片窗口", &show_picture_window);
         ImGui::Text("内置 JPG（内存加载）");
         if (picture_image.DS != 0) {
             ImGui::Image(picture_image.DS, ImVec2(240, 240));
         } else {
             ImGui::TextDisabled("JPG 加载失败");
         }
+        ImGui::End();
+    }
 
-        ImGui::Separator();
+    if (show_gif_window) {
+        ImGui::Begin("GIF 窗口", &show_gif_window);
         ImGui::Text("内置 GIF（内存加载）");
         if (congyv_gif.DS != nullptr && congyv_gif.frames > 0) {
             static int gif_frame = 0;
@@ -198,14 +205,6 @@ void Layout_tick_UI(bool *main_thread_flag) {
         } else {
             ImGui::TextDisabled("GIF 加载失败");
         }
-
-        if (ImGui::Button("关闭图片窗口")) {
-            show_another_window = false;
-        }
         ImGui::End();
     }
-            
-    if (show_draw_Line)
-        ImGui::GetForegroundDrawList()->AddLine(ImVec2(0,0),ImVec2(displayInfo.width, displayInfo.height),IM_COL32(255,0,0,255),4);
-
 }
