@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         graphics->EndFrame();        
     }
     
-    // graphics->DeleteTexture(image);
+    release_My_drawdata();
     graphics->Shutdown();
     android::ANativeWindowCreator::Destroy(::window);
     return 0;

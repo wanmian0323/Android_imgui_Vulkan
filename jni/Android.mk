@@ -12,6 +12,7 @@ LOCAL_CPPFLAGS += -fvisibility=hidden
 LOCAL_CPPFLAGS += -DVK_USE_PLATFORM_ANDROID_KHR
 LOCAL_CPPFLAGS += -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES
 LOCAL_CPPFLAGS += -DIMGUI_DISABLE_DEBUG_TOOLS #禁用imgui调试工具
+LOCAL_ASFLAGS += -I$(LOCAL_PATH)/include/ImGui
 
 #引入头文件到全局#
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
@@ -35,6 +36,7 @@ LOCAL_SRC_FILES += src/ImGui/imgui_draw.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui_tables.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui_widgets.cpp
 LOCAL_SRC_FILES += src/ImGui/imgui_impl_vulkan.cpp
+LOCAL_SRC_FILES += src/ImGui/embedded_assets.S
     
 
 

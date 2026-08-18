@@ -22,8 +22,9 @@
 - 按 Android 系统版本选择 SurfaceComposer 兼容符号，覆盖 Android 9+，并针对 Android 9、10、11、12、14、15、16、17 提供符号适配表。
 - 监听 `/dev/input/event*`，解析多点触摸事件，并通过 `/dev/uinput` 创建虚拟触摸设备。
 - 处理屏幕旋转、窗口尺寸变化和 swapchain 重建。
-- 内置中文黑体、Font Awesome 图标字体和 PNG 图片资源。
+- 内置中文黑体、Font Awesome 图标字体和 JPEG 图片资源。
 - 支持从文件、内存和 GIF 内存数据加载纹理。
+- 示例资源 `heiti.ttf`、`picture.jpg` 和 `congyv.gif` 通过 `embedded_assets.S` 使用 `.incbin` 编译进可执行文件，运行时全部从内存加载，不读取外部资源文件。
 - 示例 UI 包含主题切换、穿透开关、绘制对角线、第二窗口、图片、按钮、颜色编辑器和 FPS 显示。
 
 ## 工作原理
@@ -145,14 +146,22 @@ adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
     ├── Application.mk                # ABI、API level 和 STL 配置
     ├── include
     │   ├── Android_draw              # 绘制入口和 UI 声明
-    │   ├── ImGui                     # Dear ImGui、Android backend、触摸、字体和图片
+    │   ├── ImGui                     # Dear ImGui、Android backend、触摸、字体、图片和内置资源
     │   └── Vulkan                    # Vulkan 图形抽象、函数加载和 Surface 封装
     └── src
         ├── main.cpp                  # 程序入口和主循环
         ├── Android_draw              # 示例 UI 绘制实现
-        ├── ImGui                     # Dear ImGui、Android backend、触摸和纹理实现
+        ├── ImGui                     # Dear ImGui、Android backend、触摸、纹理和资源嵌入实现
         └── Vulkan                    # Vulkan 初始化、渲染、纹理和清理
 ~~~
+
+`jni/include/ImGui/` 中的三个资源文件为：
+
+- `heiti.ttf`：中文默认字体，使用 `ImGui::AddFontFromMemoryTTF()`。
+- `picture.jpg`：示例图片，使用 `LoadTextureFromMemory()`。
+- `congyv.gif`：示例动画，使用 `LoadTextureFromMemory_gif()`，按 GIF 帧延迟循环播放。
+
+`jni/src/ImGui/embedded_assets.S` 将上述文件放入 ELF 的只读数据段，`embedded_assets.h` 提供起止地址和长度接口。
 
 ## 二次开发
 

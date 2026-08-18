@@ -18,7 +18,8 @@ extern ImGuiWindow *g_window;// 窗口信息
 
 extern int abs_ScreenX, abs_ScreenY;// 绝对屏幕X _ Y
 extern int native_window_screen_x, native_window_screen_y;
-extern TextureInfo Aekun_image;
+extern TextureInfo picture_image;
+extern TextureInfo_gif congyv_gif;
 
 extern ImFont* heiti_font;
 extern ImFont* icon_font_0;
@@ -43,6 +44,7 @@ extern void screen_config();// 获取屏幕信息
 extern void drawBegin();// 布局UI
 extern void Layout_tick_UI(bool *main_thread_flag);
 extern void init_My_drawdata();// 初始化绘制数据
+extern void release_My_drawdata();// 释放 GIF 帧索引与延迟数据
 
 
 

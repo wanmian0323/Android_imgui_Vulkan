@@ -69,9 +69,10 @@ TextureInfo AndroidImgui::LoadTextureData(const std::function<unsigned char *(Ba
 
     stbi_image_free(image_data);
 
-    if (result != NULL) {
-        m_Textures.push_back(result);
+    if (result == nullptr) {
+        return ret_data;
     }
+    m_Textures.push_back(result);
     ret_data.DS = (unsigned long long)result->DS;
     ret_data.w = result->Width;
     ret_data.h = result->Height;
@@ -96,24 +97,34 @@ TextureInfo_gif AndroidImgui::LoadTextureFromMemory_gif(void *data, int len) {
     int *delays = NULL, frames = 0;
     TextureInfo_gif textureInfo_gif{0};
 
-    stbi_uc *gif_alldata = stbi_load_gif_from_memory((const stbi_uc *) data, len, &delays, &w, &h, &frames, &n, 0);
-    if (gif_alldata == NULL) {
+    constexpr int output_channels = 4;
+    stbi_uc *gif_alldata = stbi_load_gif_from_memory(
+            (const stbi_uc *) data, len, &delays, &w, &h, &frames, &n, output_channels);
+    if (gif_alldata == nullptr || frames <= 0) {
+        stbi_image_free(delays);
         return textureInfo_gif;
     }
-    textureInfo_gif.DS = (ImTextureID *)malloc(sizeof(ImTextureID) * frames);
+    textureInfo_gif.DS = (unsigned long long *)malloc(sizeof(unsigned long long) * frames);
+    if (textureInfo_gif.DS == nullptr) {
+        stbi_image_free(gif_alldata);
+        stbi_image_free(delays);
+        return textureInfo_gif;
+    }
     for (int vi = 0; vi < frames; vi++) {
         BaseTexData tex_data{};
         tex_data.Width = w;
         tex_data.Height = h;
-        tex_data.Channels = 4;
-        stbi_uc *image_data = (stbi_uc *)(gif_alldata + (vi * w * h * n));
+        tex_data.Channels = output_channels;
+        stbi_uc *image_data = gif_alldata + (vi * w * h * output_channels);
         auto result = LoadTexture(&tex_data, image_data);
-        if (result != NULL) {
+        if (result != nullptr) {
             m_Textures.push_back(result);
+            textureInfo_gif.DS[vi] = (unsigned long long)result->DS;
+        } else {
+            textureInfo_gif.DS[vi] = 0;
         }
-        textureInfo_gif.DS[vi] = (unsigned long long)result->DS;   
     }
-    stbi_image_free((void *)gif_alldata);        
+    stbi_image_free(gif_alldata);
     textureInfo_gif.w = w;
     textureInfo_gif.h = h;
     textureInfo_gif.frames = frames;

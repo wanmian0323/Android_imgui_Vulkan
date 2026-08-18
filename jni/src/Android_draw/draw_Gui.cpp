@@ -1,13 +1,12 @@
 #include <chrono>
+#include <cstdlib>
 
 #include "draw.h"
-#include "heiti_font.h"
+#include "embedded_assets.h"
 #include "fontawesome-brands.h"
 #include "fontawesome-regular.h"
 #include "fontawesome-solid.h"
 #include "gui_icon.h"
-   
-#include "pic_ZhenAiKun_png.h"
 
 bool permeate_record = false;
 bool permeate_record_ini = false;
@@ -21,7 +20,8 @@ ImGuiWindow *g_window = NULL;// 窗口信息
 int abs_ScreenX = 0, abs_ScreenY = 0;// 绝对屏幕X _ Y
 int native_window_screen_x = 0, native_window_screen_y = 0;
 
-TextureInfo Aekun_image{};
+TextureInfo picture_image{};
+TextureInfo_gif congyv_gif{};
 
 ImFont* heiti_font = NULL;
 ImFont* icon_font_0 = NULL;
@@ -36,8 +36,11 @@ bool M_Android_LoadFont(float SizePixels) {
     ImFontConfig font_config;
     font_config.OversampleH = 2;
     font_config.OversampleV = 1;
-    ::heiti_font = io.Fonts->AddFontFromMemoryCompressedBase85TTF(
-            Heiti_compressed_data_base85, SizePixels, &font_config, io.Fonts->GetGlyphRangesChineseFull());
+    font_config.FontDataOwnedByAtlas = false;
+    ::heiti_font = io.Fonts->AddFontFromMemoryTTF(
+            const_cast<unsigned char *>(g_heiti_ttf_start),
+            static_cast<int>(EmbeddedAssets::HeitiSize()),
+            SizePixels, &font_config, io.Fonts->GetGlyphRangesChineseFull());
     if (::heiti_font == nullptr) {
         return false;
     }
@@ -60,7 +63,19 @@ void init_My_drawdata() {
     ImGui::StyleColorsLight(); //白色
     M_Android_LoadFont(25.0f); //加载项目内置黑体与图标
     ImGui::GetStyle().ScaleAllSizes(3.25f);
-    ::Aekun_image = graphics->LoadTextureFromMemory((void *)picture_ZhenAiKun_PNG_H, sizeof(picture_ZhenAiKun_PNG_H));
+    ::picture_image = graphics->LoadTextureFromMemory(
+            const_cast<unsigned char *>(g_picture_jpg_start),
+            static_cast<int>(EmbeddedAssets::PictureSize()));
+    ::congyv_gif = graphics->LoadTextureFromMemory_gif(
+            const_cast<unsigned char *>(g_congyv_gif_start),
+            static_cast<int>(EmbeddedAssets::CongyvGifSize()));
+}
+
+void release_My_drawdata() {
+    std::free(::congyv_gif.DS);
+    std::free(::congyv_gif.delays);
+    ::congyv_gif = {};
+    ::picture_image = {};
 }
 
 
@@ -81,6 +96,7 @@ void drawBegin() {
         LastCoordinate.Size_x = ::g_window->Size.x;
         LastCoordinate.Size_y = ::g_window->Size.y;
 
+        release_My_drawdata();
         graphics->Shutdown();
         android::ANativeWindowCreator::Destroy(::window);
         ::window = android::ANativeWindowCreator::Create("test_sysGui", native_window_screen_x, native_window_screen_y, permeate_record);
@@ -131,7 +147,7 @@ void Layout_tick_UI(bool *main_thread_flag) {
         }
             
         ImGui::Checkbox("绘制射线", &show_draw_Line);
-        ImGui::Checkbox("坤坤窗口", &show_another_window);
+        ImGui::Checkbox("图片与 GIF 窗口", &show_another_window);
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::ColorEdit4("取色器", (float *) &clear_color); // Edit 3 floats representing a color
         if (ImGui::Button("Button")) {
@@ -149,9 +165,41 @@ void Layout_tick_UI(bool *main_thread_flag) {
         
     if (show_another_window) { // 3. Show another simple window.
         ImGui::Begin("另一个窗口", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("另一个窗口的 爱坤!");
-        ImGui::Image(Aekun_image.DS, ImVec2(170, 170));
-        if (ImGui::Button("关闭这个坤口")) {
+        ImGui::Text("内置 JPG（内存加载）");
+        if (picture_image.DS != 0) {
+            ImGui::Image(picture_image.DS, ImVec2(240, 240));
+        } else {
+            ImGui::TextDisabled("JPG 加载失败");
+        }
+
+        ImGui::Separator();
+        ImGui::Text("内置 GIF（内存加载）");
+        if (congyv_gif.DS != nullptr && congyv_gif.frames > 0) {
+            static int gif_frame = 0;
+            static std::chrono::steady_clock::time_point next_gif_frame{};
+            const auto now = std::chrono::steady_clock::now();
+            if (gif_frame >= congyv_gif.frames) {
+                gif_frame = 0;
+                next_gif_frame = {};
+            }
+            if (next_gif_frame == std::chrono::steady_clock::time_point{}) {
+                const int delay = congyv_gif.delays != nullptr && congyv_gif.delays[gif_frame] > 0
+                                  ? congyv_gif.delays[gif_frame] : 100;
+                next_gif_frame = now + std::chrono::milliseconds(delay);
+            } else if (now >= next_gif_frame) {
+                gif_frame = (gif_frame + 1) % congyv_gif.frames;
+                const int delay = congyv_gif.delays != nullptr && congyv_gif.delays[gif_frame] > 0
+                                  ? congyv_gif.delays[gif_frame] : 100;
+                next_gif_frame = now + std::chrono::milliseconds(delay);
+            }
+            if (congyv_gif.DS[gif_frame] != 0) {
+                ImGui::Image(congyv_gif.DS[gif_frame], ImVec2(240, 240));
+            }
+        } else {
+            ImGui::TextDisabled("GIF 加载失败");
+        }
+
+        if (ImGui::Button("关闭图片窗口")) {
             show_another_window = false;
         }
         ImGui::End();
