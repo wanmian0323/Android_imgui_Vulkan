@@ -144,13 +144,13 @@ adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
     ├── Android.mk                    # NDK 模块、编译选项和源文件清单
     ├── Application.mk                # ABI、API level 和 STL 配置
     ├── include
-    │   ├── Android_draw              # 绘制入口、Android 生命周期和触摸声明
-    │   ├── ImGui                     # Dear ImGui 核心、Vulkan backend、字体和图片
+    │   ├── Android_draw              # 绘制入口和 UI 声明
+    │   ├── ImGui                     # Dear ImGui、Android backend、触摸、字体和图片
     │   └── Vulkan                    # Vulkan 图形抽象、函数加载和 Surface 封装
     └── src
         ├── main.cpp                  # 程序入口和主循环
-        ├── Android_draw              # 示例 UI、Android backend、触摸和纹理初始化
-        ├── ImGui                     # Dear ImGui 实现和 Vulkan backend
+        ├── Android_draw              # 示例 UI 绘制实现
+        ├── ImGui                     # Dear ImGui、Android backend、触摸和纹理实现
         └── Vulkan                    # Vulkan 初始化、渲染、纹理和清理
 ~~~
 
@@ -239,7 +239,7 @@ adb shell su -c 'ls -l /system/lib64/libgui.so /system/lib64/libutils.so'
 adb logcat -s ImGui AndroidRuntime
 ~~~
 
-如果 ROM 没有当前代码需要的内部符号，需要在 `jni/include/Android_draw/ANativeWindowCreator.h` 的 `patchesTable` 中为该 ROM 增加对应 mangled symbol，并重新编译。
+如果 ROM 没有当前代码需要的内部符号，需要在 `jni/include/ImGui/ANativeWindowCreator.h` 的 `patchesTable` 中为该 ROM 增加对应 mangled symbol，并重新编译。
 
 ### 触摸没有响应
 

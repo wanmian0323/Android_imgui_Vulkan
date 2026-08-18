@@ -23,10 +23,10 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/include/Vulkan
 
 LOCAL_SRC_FILES := src/main.cpp
 LOCAL_SRC_FILES += src/Android_draw/draw_Gui.cpp
-LOCAL_SRC_FILES += src/Android_draw/TouchHelperA.cpp
-LOCAL_SRC_FILES += src/Android_draw/AndroidImgui.cpp
-LOCAL_SRC_FILES += src/Android_draw/my_imgui_impl_android.cpp
-LOCAL_SRC_FILES += src/Android_draw/stb_image.cpp
+LOCAL_SRC_FILES += src/ImGui/TouchHelperA.cpp
+LOCAL_SRC_FILES += src/ImGui/AndroidImgui.cpp
+LOCAL_SRC_FILES += src/ImGui/my_imgui_impl_android.cpp
+LOCAL_SRC_FILES += src/ImGui/stb_image.cpp
 LOCAL_SRC_FILES += src/Vulkan/GraphicsManager.cpp
 LOCAL_SRC_FILES += src/Vulkan/VulkanGraphics.cpp
 LOCAL_SRC_FILES += src/Vulkan/vulkan_wrapper.cpp
