@@ -42,6 +42,10 @@ namespace Touch {
 
     My_Vector2 GetScale();
 
+    void UpdateDisplaySize(const My_Vector2 &size);
+
+    void UpdateImGuiInput();
+
     void setOrientation(int orientation);
 
     void setOtherTouch(bool p_otherTouch);

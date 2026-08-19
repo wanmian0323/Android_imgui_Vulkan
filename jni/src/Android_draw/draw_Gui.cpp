@@ -87,7 +87,10 @@ void screen_config() {
      if (std::chrono::steady_clock::now() - lastTime < std::chrono::milliseconds(250)) //0.25秒
          return;
          
-    ::displayInfo = android::ANativeWindowCreator::GetDisplayInfo();
+    const auto next_display_info = android::ANativeWindowCreator::GetDisplayInfo();
+    if (next_display_info.width > 0 && next_display_info.height > 0) {
+        ::displayInfo = next_display_info;
+    }
     
     lastTime = std::chrono::steady_clock::now();
 }
@@ -115,11 +118,27 @@ static void limit_gui_frame_rate() {
 
 void drawBegin() {
     limit_gui_frame_rate();
-    if (::permeate_record_ini) {
-        LastCoordinate.Pos_x = ::g_window->Pos.x;
-        LastCoordinate.Pos_y = ::g_window->Pos.y;
-        LastCoordinate.Size_x = ::g_window->Size.x;
-        LastCoordinate.Size_y = ::g_window->Size.y;
+    screen_config();
+
+    const bool valid_display_size = displayInfo.width > 0 && displayInfo.height > 0;
+    const bool display_size_changed = valid_display_size
+            && (native_window_screen_x != displayInfo.width
+                || native_window_screen_y != displayInfo.height);
+
+    if (::permeate_record_ini || display_size_changed) {
+        if (::g_window != nullptr) {
+            LastCoordinate.Pos_x = ::g_window->Pos.x;
+            LastCoordinate.Pos_y = ::g_window->Pos.y;
+            LastCoordinate.Size_x = ::g_window->Size.x;
+            LastCoordinate.Size_y = ::g_window->Size.y;
+        }
+
+        if (display_size_changed) {
+            native_window_screen_x = displayInfo.width;
+            native_window_screen_y = displayInfo.height;
+            abs_ScreenX = displayInfo.width;
+            abs_ScreenY = displayInfo.height;
+        }
 
         release_My_drawdata();
         graphics->Shutdown();
@@ -127,19 +146,17 @@ void drawBegin() {
         ::window = android::ANativeWindowCreator::Create("test_sysGui", native_window_screen_x, native_window_screen_y, permeate_record);
         graphics->Init_Render(::window, native_window_screen_x, native_window_screen_y);
         ::init_My_drawdata(); //初始化绘制数据
-    } 
+        ::g_window = nullptr;
+        ::permeate_record_ini = true;
 
+        Touch::UpdateDisplaySize({(float) native_window_screen_x,
+                                  (float) native_window_screen_y});
+    }
 
-    static uint32_t orientation = -1;
-    screen_config();
+    static int32_t orientation = -1;
     if (orientation != displayInfo.orientation) {
         orientation = displayInfo.orientation;
         Touch::setOrientation(displayInfo.orientation);
-        if (g_window != NULL) {
-            g_window->Pos.x = 100;
-            g_window->Pos.y = 125;        
-        }        
-        //cout << " width:" << displayInfo.width << " height:" << displayInfo.height << " orientation:" << displayInfo.orientation << endl;
     }
 }
 
@@ -150,8 +167,15 @@ void Layout_tick_UI(bool *main_thread_flag) {
     { 
         ImGui::Begin("晚宀-imgui", main_thread_flag);  // Create a window called "Hello, world!" and append into it.
         if (::permeate_record_ini) {
-            ImGui::SetWindowPos({LastCoordinate.Pos_x, LastCoordinate.Pos_y});
-            ImGui::SetWindowSize({LastCoordinate.Size_x, LastCoordinate.Size_y});
+            const float restored_width = std::min(LastCoordinate.Size_x,
+                                                  (float) displayInfo.width);
+            const float restored_height = std::min(LastCoordinate.Size_y,
+                                                   (float) displayInfo.height);
+            const float max_x = std::max(0.0f, (float) displayInfo.width - restored_width);
+            const float max_y = std::max(0.0f, (float) displayInfo.height - restored_height);
+            ImGui::SetWindowSize({restored_width, restored_height});
+            ImGui::SetWindowPos({std::clamp(LastCoordinate.Pos_x, 0.0f, max_x),
+                                 std::clamp(LastCoordinate.Pos_y, 0.0f, max_y)});
             permeate_record_ini = false;   
         }
         ImGui::Text("渲染接口 : %s, gui版本 : %s", graphics->RenderName, ImGui::GetVersion());               // Display some text (you can use a format strings too)

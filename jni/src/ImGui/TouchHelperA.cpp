@@ -1,6 +1,8 @@
 #include <dirent.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
+#include <atomic>
 #include <cmath>
 #include <linux/input.h>
 #include <linux/uinput.h>
@@ -30,21 +32,54 @@ namespace Touch {
 
     static My_Vector2 screenSize;
 
+    static My_Vector2 displaySize;
+
+    static My_Vector2 touchAxisMax;
+
     static std::vector<Device> devices;
+
+    static std::vector<pthread_t> touchThreads;
 
     static int nowfd;
 
     static int orientation = 0;
 
-    static bool initialized = false;
+    static std::atomic<bool> initialized{false};
 
     static bool readOnly = false;
 
     static bool otherTouch = false;
 
+    static My_Vector2 pendingMousePos;
+
+    static bool pendingMouseDown = false;
+
+    static bool pendingMouseEvent = false;
+
     static std::function<void(std::vector<Device> *)> callback;
 
     static spinlock lock;
+
+    static void UpdateDisplayMetricsUnlocked(const My_Vector2 &size) {
+        if (size.x <= 0.0f || size.y <= 0.0f) {
+            return;
+        }
+
+        displaySize = size;
+        screenSize = size.x > size.y ? size : My_Vector2{size.y, size.x};
+
+        My_Vector2 scaleSize = size;
+        if (scaleSize.x > scaleSize.y) {
+            std::swap(scaleSize.x, scaleSize.y);
+        }
+        if (otherTouch) {
+            std::swap(scaleSize.x, scaleSize.y);
+        }
+        if (touchAxisMax.x > 0.0f && touchAxisMax.y > 0.0f) {
+            touch_scale.x = touchAxisMax.x / scaleSize.x;
+            touch_scale.y = touchAxisMax.y / scaleSize.y;
+        }
+    }
 
     void Upload() {
         static bool isFirstDown = true;
@@ -181,7 +216,15 @@ namespace Touch {
         int latest = 0;
         input_event inputEvent[64]{0};
 
-        while (initialized) {
+        while (initialized.load(std::memory_order_acquire)) {
+            pollfd descriptor{device.fd, POLLIN, 0};
+            const int pollResult = poll(&descriptor, 1, 100);
+            if (!initialized.load(std::memory_order_acquire)) {
+                break;
+            }
+            if (pollResult <= 0 || (descriptor.revents & POLLIN) == 0) {
+                continue;
+            }
             auto readSize = (int32_t) read(device.fd, inputEvent, sizeof(inputEvent));
             if (readSize <= 0 || (readSize % sizeof(input_event)) != 0) {
                 continue;
@@ -194,6 +237,9 @@ namespace Touch {
                 if (ie.type == EV_ABS) {
                     if (ie.code == ABS_MT_SLOT) {
                         latest = ie.value;
+                        if (latest < 0 || latest >= maxF) {
+                            latest = 0;
+                        }
                         continue;
                     }
                     if (ie.code == ABS_MT_TRACKING_ID) {
@@ -217,16 +263,24 @@ namespace Touch {
                     }
                 }
                 if (ie.code == SYN_REPORT) {
-                    if (ImGui::GetCurrentContext() != nullptr) {
-                        ImGuiIO &io = ImGui::GetIO();
-                        if (device.Finger[latest].isDown) {
-                            auto pos = Touch2Screen(device.Finger[latest].pos);
-                            io.MousePos = ImVec2(pos.x, pos.y);
-                            io.MouseDown[0] = true;
-                        } else {
-                            io.MouseDown[0] = false;
+                    touchObj *activeFinger = nullptr;
+                    for (auto &touchDevice: devices) {
+                        for (auto &finger: touchDevice.Finger) {
+                            if (finger.isDown) {
+                                activeFinger = &finger;
+                                break;
+                            }
+                        }
+                        if (activeFinger != nullptr) {
+                            break;
                         }
                     }
+
+                    pendingMouseDown = activeFinger != nullptr;
+                    if (activeFinger != nullptr) {
+                        pendingMousePos = Touch2Screen(activeFinger->pos);
+                    }
+                    pendingMouseEvent = true;
 
                     if (!readOnly) {
                         if (callback) {
@@ -281,13 +335,9 @@ namespace Touch {
     bool Init(const My_Vector2 &s, bool p_readOnly) {
         Close();
         devices.clear();
-        My_Vector2 size = s;
         readOnly = p_readOnly;
-        if (size.x > size.y) {
-            screenSize = size;
-        } else {
-            screenSize = {size.y, size.x};
-        }
+        pendingMouseDown = false;
+        pendingMouseEvent = false;
         DIR *dir = opendir("/dev/input/");
         if (!dir) {
             return false;
@@ -303,7 +353,7 @@ namespace Touch {
         char temp[128];
         for (int i = 0; i <= eventCount; i++) {
             sprintf(temp, "/dev/input/event%d", i);
-            int fd = open(temp, O_RDWR);
+            int fd = open(temp, readOnly ? O_RDONLY : O_RDWR);
             if (fd < 0) {
                 continue;
             }
@@ -330,6 +380,8 @@ namespace Touch {
 
         int screenX = devices[0].absX.maximum;
         int screenY = devices[0].absY.maximum;
+        touchAxisMax = {(float) screenX, (float) screenY};
+        UpdateDisplayMetricsUnlocked(s);
 
         if (!readOnly) {
             struct uinput_user_dev ui_dev;
@@ -411,29 +463,28 @@ namespace Touch {
                 return false;
             }
         }
-        initialized = true;
+        initialized.store(true, std::memory_order_release);
 
-        pthread_t t;
+        touchThreads.clear();
         for (int i = 0; i < devices.size(); i++) {
             devices[i].S2TX = (float) screenX / (float) devices[i].absX.maximum;
             devices[i].S2TY = (float) screenY / (float) devices[i].absY.maximum;
-            pthread_create(&t, nullptr, TypeA, (void *) (long) i);
+            pthread_t thread{};
+            if (pthread_create(&thread, nullptr, TypeA, (void *) (long) i) == 0) {
+                touchThreads.push_back(thread);
+            }
         }
-        if (size.x > size.y) {
-            std::swap(size.x, size.y);
-        }
-        if (otherTouch) {
-            std::swap(size.x, size.y);
-        }
-        touch_scale.x = (float) screenX / size.x;
-        touch_scale.y = (float) screenY / size.y;
-
         //system("chmod 000 -R /proc/bus/input/*");
         return true;
     }
 
     void Close() {
-        if (initialized) {
+        if (initialized.exchange(false, std::memory_order_acq_rel)) {
+            for (pthread_t thread: touchThreads) {
+                pthread_join(thread, nullptr);
+            }
+            touchThreads.clear();
+
             for (auto &device: devices) {
                 if (!readOnly)
                     ioctl(device.fd, EVIOCGRAB, UNGRAB);
@@ -446,7 +497,6 @@ namespace Touch {
                 nowfd = 0;
             }
             memset(input.event, 0, sizeof(input.event));
-            initialized = false;
             devices.clear();
         }
     }
@@ -535,11 +585,48 @@ namespace Touch {
         return touch_scale;
     }
 
+    void UpdateDisplaySize(const My_Vector2 &size) {
+        lock.lock();
+        UpdateDisplayMetricsUnlocked(size);
+        lock.unlock();
+    }
+
+    void UpdateImGuiInput() {
+        My_Vector2 mousePos{};
+        bool mouseDown = false;
+        bool hasEvent = false;
+
+        lock.lock();
+        if (pendingMouseEvent) {
+            mousePos = pendingMousePos;
+            mouseDown = pendingMouseDown;
+            pendingMouseEvent = false;
+            hasEvent = true;
+        }
+        lock.unlock();
+
+        if (!hasEvent || ImGui::GetCurrentContext() == nullptr) {
+            return;
+        }
+
+        ImGuiIO &io = ImGui::GetIO();
+        io.AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+        if (mouseDown) {
+            io.AddMousePosEvent(mousePos.x, mousePos.y);
+        }
+        io.AddMouseButtonEvent(0, mouseDown);
+    }
+
     void setOrientation(int o) {
+        lock.lock();
         orientation = o;
+        lock.unlock();
     }
 
     void setOtherTouch(bool p_otherTouch) {
+        lock.lock();
         otherTouch = p_otherTouch;
+        UpdateDisplayMetricsUnlocked(displaySize);
+        lock.unlock();
     }
 }
