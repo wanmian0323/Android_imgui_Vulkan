@@ -2,6 +2,9 @@
 
 一个面向 Android 原生环境的 Dear ImGui + Vulkan 绘制示例。项目直接通过 Android NDK 构建 `arm64-v8a` 原生可执行文件，创建独立的 `ANativeWindow`，使用 Vulkan 渲染 ImGui，并把触摸事件转换为 ImGui 输入。
 
+如有侵权 请联系2010362008@qq.com
+[q群](https://qun.qq.com/universal-share/share?ac=1&authKey=9ZUuM1MRQ%2BXuVah0FE%2FEMeovEj%2FBlr4iINJqlLz9adp2mdM5ShnV2FwFIOvnlG%2Fa&busi_data=eyJncm91cENvZGUiOiIxMTA1MzQ0NzA3IiwidG9rZW4iOiJNZXRQdi94dnc3UkNMMWs3dEZNNW5DbXpSQWUyK1FaUFZVcjNBTEZxcC9zaWEwaGdRbktGUDY5YVk4RlZPK1VPIiwidWluIjoiMjAxMDM2MjAwOCJ9&data=odFAPYLlHQIp07X7V_hh2MGleYPxyWZbWssULFpvH3p_bgC-q6cU_drPE-I6H9Zy0WU35GjnrnAzZwG1i7lsig&svctype=4&tempid=h5_group_info)
+
 > [!IMPORTANT]
 > 这是 NDK 原生可执行项目，不是 Gradle/Android Studio APK 工程。当前构建脚本会生成 `libs/arm64-v8a/Android_imgui_Vulkan.rc`，运行时通常需要 root 权限才能访问 SurfaceFlinger 相关接口、`/dev/input` 和 `/dev/uinput`。
 
