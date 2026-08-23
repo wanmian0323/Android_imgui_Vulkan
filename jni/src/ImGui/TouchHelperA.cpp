@@ -6,6 +6,7 @@
 #include <cmath>
 #include <linux/input.h>
 #include <linux/uinput.h>
+#include <android/log.h>
 #include <vector>
 #include <thread>
 #include <unordered_map>
@@ -376,6 +377,9 @@ namespace Touch {
             puts("获取屏幕驱动失败");
             return false;
         }
+        __android_log_print(ANDROID_LOG_INFO, "ImGui",
+                            "[touch] passive=%s devices=%zu",
+                            readOnly ? "true" : "false", devices.size());
         //LOGD("device count: %zu", devices.size());
 
         int screenX = devices[0].absX.maximum;
