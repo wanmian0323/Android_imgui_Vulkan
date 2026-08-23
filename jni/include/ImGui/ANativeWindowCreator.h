@@ -15,8 +15,18 @@
 #include <sys/system_properties.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <chrono>
+#include <limits>
+#include <optional>
+#include <unistd.h>
 #include <unordered_map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #define ResolveMethod(ClassName, MethodName, Handle, MethodSignature)                                                                    \
@@ -139,6 +149,7 @@ namespace android {
             void (*SurfaceComposerClient__Destructor)(void *thiz) = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__CreateSurface)(void *thiz, void *name, uint32_t w, uint32_t h, int32_t format, uint32_t flags, void *parentHandle, void *layerMetadata, uint32_t *outTransformHint) = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__CreateSurface_and9)(void *thiz, void *name, uint32_t w, uint32_t h, int32_t format, uint32_t flags, void *parentHandle, int32_t windowType, int32_t ownerUid) = nullptr;
+            StrongPointer<void> (*SurfaceComposerClient__MirrorSurface)(void *thiz, void *surface, void *mirrorRoot) = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__GetInternalDisplayToken)() = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__GetBuiltInDisplay)(ui::DisplayType type) = nullptr;
             int32_t (*SurfaceComposerClient__GetDisplayState)(StrongPointer<void> &display, ui::DisplayState *displayState) = nullptr;
@@ -149,6 +160,13 @@ namespace android {
             void (*SurfaceComposerClient__Transaction__Constructor)(void *thiz) = nullptr;
             void *(*SurfaceComposerClient__Transaction__SetLayer)(void *thiz, StrongPointer<void> &surfaceControl, int32_t z) = nullptr;
             void *(*SurfaceComposerClient__Transaction__SetTrustedOverlay)(void *thiz, StrongPointer<void> &surfaceControl, bool isTrustedOverlay) = nullptr;
+            void (*WindowInfoHandle__Constructor)(void *thiz) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__SetInputWindowInfo)(void *thiz, StrongPointer<void> &surfaceControl, void *inputWindowInfo) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__SetLayerStack)(void *thiz, StrongPointer<void> &surfaceControl, uint32_t layerStack) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__Show)(void *thiz, StrongPointer<void> &surfaceControl) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__Reparent)(void *thiz, StrongPointer<void> &surfaceControl, StrongPointer<void> &newParent) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__SetMatrix)(void *thiz, StrongPointer<void> &surfaceControl, float dsdx, float dtdx, float dtdy, float dsdy) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__SetPosition)(void *thiz, StrongPointer<void> &surfaceControl, float x, float y) = nullptr;
             int32_t (*SurfaceComposerClient__Transaction__Apply)(void *thiz, bool synchronous, bool oneWay) = nullptr;
 
             int32_t (*SurfaceControl__Validate)(void *thiz) = nullptr;
@@ -242,22 +260,41 @@ namespace android {
                 ResolveMethod(String8, Constructor, libutils, "_ZN7android7String8C2EPKc");
                 ResolveMethod(String8, Destructor, libutils, "_ZN7android7String8D2Ev");
 
-                ResolveMethod(LayerMetadata, Constructor, libgui, "_ZN7android13LayerMetadataC2Ev");
-                ResolveMethod(LayerMetadata, setInt32, libgui, "_ZN7android13LayerMetadata8setInt32Eji");
+                ResolveMethod(LayerMetadata, Constructor, libgui, "_ZN7android3gui13LayerMetadataC2Ev");
+                ResolveMethod(LayerMetadata, setInt32, libgui, "_ZN7android3gui13LayerMetadata8setInt32Eji");
 
 
                 ResolveMethod(SurfaceComposerClient, Constructor, libgui, "_ZN7android21SurfaceComposerClientC2Ev");
-                ResolveMethod(SurfaceComposerClient, CreateSurface, libgui, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj");
+                ResolveMethod(SurfaceComposerClient, CreateSurface, libgui, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjiiRKNS_2spINS_7IBinderEEENS_3gui13LayerMetadataEPj");
+                if (systemVersion < 14) {
                 ResolveMethod(SurfaceComposerClient, GetInternalDisplayToken, libgui, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv");  //小于或者等于安卓13
                 ResolveMethod(SurfaceComposerClient, GetDisplayState, libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE");
+                }
+                if (systemVersion < 11) {
                 ResolveMethod(SurfaceComposerClient, GetDisplayInfo, libgui, "_ZN7android21SurfaceComposerClient14getDisplayInfoERKNS_2spINS_7IBinderEEEPNS_11DisplayInfoE"); //安卓10及以下
+                ResolveMethod(SurfaceComposerClient, GetPhysicalDisplayIds, libgui, "_ZN7android21SurfaceComposerClient21getPhysicalDisplayIdsEv");
+                }
                 ResolveMethod(SurfaceComposerClient, GetPhysicalDisplayIds, libgui, "_ZN7android21SurfaceComposerClient21getPhysicalDisplayIdsEv");
                 ResolveMethod(SurfaceComposerClient, GetPhysicalDisplayToken, libgui, "_ZN7android21SurfaceComposerClient23getPhysicalDisplayTokenENS_17PhysicalDisplayIdE");
 
+                ResolveMethod(SurfaceComposerClient, GetDisplayState, libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE");
                 ResolveMethod(SurfaceComposerClient__Transaction, Constructor, libgui, "_ZN7android21SurfaceComposerClient11TransactionC2Ev");
                 ResolveMethod(SurfaceComposerClient__Transaction, SetLayer, libgui, "_ZN7android21SurfaceComposerClient11Transaction8setLayerERKNS_2spINS_14SurfaceControlEEEi");
                 ResolveMethod(SurfaceComposerClient__Transaction, SetTrustedOverlay, libgui, "_ZN7android21SurfaceComposerClient11Transaction17setTrustedOverlayERKNS_2spINS_14SurfaceControlEEEb");
+                if (systemVersion >= 16) {
+                    ResolveMethod(WindowInfoHandle, Constructor, libgui, "_ZN7android3gui16WindowInfoHandleC1Ev");
+                    ResolveMethod(SurfaceComposerClient__Transaction, SetInputWindowInfo, libgui, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEENS2_INS_3gui16WindowInfoHandleEEE");
+                }
                 ResolveMethod(SurfaceComposerClient__Transaction, Apply, libgui, "_ZN7android21SurfaceComposerClient11Transaction5applyEbb");
+
+                if (systemVersion >= 13) {
+                    ResolveMethod(SurfaceComposerClient, MirrorSurface, libgui, "_ZN7android21SurfaceComposerClient13mirrorSurfaceEPNS_14SurfaceControlES2_");
+                    ResolveMethod(SurfaceComposerClient__Transaction, SetLayerStack, libgui, "_ZN7android21SurfaceComposerClient11Transaction13setLayerStackERKNS_2spINS_14SurfaceControlEEENS_2ui10LayerStackE");
+                    ResolveMethod(SurfaceComposerClient__Transaction, Show, libgui, "_ZN7android21SurfaceComposerClient11Transaction4showERKNS_2spINS_14SurfaceControlEEE");
+                    ResolveMethod(SurfaceComposerClient__Transaction, Reparent, libgui, "_ZN7android21SurfaceComposerClient11Transaction8reparentERKNS_2spINS_14SurfaceControlEEES6_");
+                    ResolveMethod(SurfaceComposerClient__Transaction, SetMatrix, libgui, "_ZN7android21SurfaceComposerClient11Transaction9setMatrixERKNS_2spINS_14SurfaceControlEEEffff");
+                    ResolveMethod(SurfaceComposerClient__Transaction, SetPosition, libgui, "_ZN7android21SurfaceComposerClient11Transaction11setPositionERKNS_2spINS_14SurfaceControlEEEff");
+                }
 
                 ResolveMethod(SurfaceControl, Validate, libgui, "_ZNK7android14SurfaceControl8validateEv");
                 ResolveMethod(SurfaceControl, GetSurface, libgui, "_ZN7android14SurfaceControl10getSurfaceEv");
@@ -383,6 +420,60 @@ namespace android {
                 return Functionals::GetInstance().SurfaceComposerClient__Transaction__SetTrustedOverlay(data, surfaceControl, isTrustedOverlay);
             }
 
+            void SetInputWindowInfoAllow(StrongPointer<void> &surfaceControl) {
+                auto &f = Functionals::GetInstance();
+                if (f.systemVersion < 16 || f.WindowInfoHandle__Constructor == nullptr ||
+                    f.SurfaceComposerClient__Transaction__SetInputWindowInfo == nullptr)
+                    return;
+
+                void *handleStorage = std::malloc(0x228);
+                if (handleStorage == nullptr)
+                    return;
+                f.WindowInfoHandle__Constructor(handleStorage);
+
+                constexpr size_t windowInfoOffset = 0x38;
+                constexpr size_t touchOcclusionModeOffset = windowInfoOffset + 0x160;
+                constexpr size_t inputConfigOffset = windowInfoOffset + 0x188;
+                auto *handleBytes = reinterpret_cast<uint8_t *>(handleStorage);
+
+                auto *windowName = reinterpret_cast<std::string *>(
+                        handleBytes + windowInfoOffset + 0x20);
+                *windowName = "ImGuiInputPassThrough";
+                *reinterpret_cast<int32_t *>(handleBytes + touchOcclusionModeOffset) = 2; // ALLOW
+                *reinterpret_cast<uint32_t *>(handleBytes + inputConfigOffset) = 1; // NO_INPUT_CHANNEL
+
+                void *handle = handleStorage;
+                f.RefBase__IncStrong(handle, this);
+                f.SurfaceComposerClient__Transaction__SetInputWindowInfo(data, surfaceControl, &handle);
+                __android_log_print(ANDROID_LOG_INFO, "ImGui",
+                                    "[input-window] handle=%p name=%s touch=%d config=0x%x submitted=%d",
+                                    handleStorage,
+                                    windowName->c_str(),
+                                    *reinterpret_cast<int32_t *>(handleBytes + touchOcclusionModeOffset),
+                                    *reinterpret_cast<uint32_t *>(handleBytes + inputConfigOffset),
+                                    handle == nullptr ? 1 : 0);
+            }
+
+            void *SetLayerStack(StrongPointer<void> &surfaceControl, uint32_t layerStack) {
+                return Functionals::GetInstance().SurfaceComposerClient__Transaction__SetLayerStack(data, surfaceControl, layerStack);
+            }
+
+            void Show(StrongPointer<void> &surfaceControl) {
+                Functionals::GetInstance().SurfaceComposerClient__Transaction__Show(data, surfaceControl);
+            }
+
+            void Reparent(StrongPointer<void> &surfaceControl, StrongPointer<void> &newParent) {
+                Functionals::GetInstance().SurfaceComposerClient__Transaction__Reparent(data, surfaceControl, newParent);
+            }
+
+            void SetMatrix(StrongPointer<void> &surfaceControl, float dsdx, float dtdx, float dtdy, float dsdy) {
+                Functionals::GetInstance().SurfaceComposerClient__Transaction__SetMatrix(data, surfaceControl, dsdx, dtdx, dtdy, dsdy);
+            }
+
+            void SetPosition(StrongPointer<void> &surfaceControl, float x, float y) {
+                Functionals::GetInstance().SurfaceComposerClient__Transaction__SetPosition(data, surfaceControl, x, y);
+            }
+
             int32_t Apply(bool synchronous, bool oneWay) {
                 if (12 >= Functionals::GetInstance().systemVersion)
                     return reinterpret_cast<int32_t (*)(void *, bool)>(Functionals::GetInstance().SurfaceComposerClient__Transaction__Apply)(data, synchronous);
@@ -430,7 +521,10 @@ namespace android {
                 
                 if (12 <= Functionals::GetInstance().systemVersion) {
                     static SurfaceComposerClientTransaction transaction;
-                    transaction.SetTrustedOverlay(result, true);
+                    transaction.SetTrustedOverlay(result, skipScrenshot);
+                    if (!skipScrenshot) {
+                        transaction.SetInputWindowInfoAllow(result);
+                    }
                     transaction.Apply(false, true);
                 }
                 return {result.get()};
@@ -471,6 +565,161 @@ namespace android {
 
                     return true;
                 }
+            }
+
+            bool MirrorToLayerStack(SurfaceControl &source, uint32_t layerStack,
+                                    int32_t width, int32_t height,
+                                    int32_t sourceWidth, int32_t sourceHeight,
+                                    int32_t orientation,
+                                    SurfaceControl *mirrorOut, SurfaceControl *rootOut) {
+                auto &f = Functionals::GetInstance();
+                if (f.systemVersion < 13 || !f.SurfaceComposerClient__MirrorSurface ||
+                    !f.SurfaceComposerClient__Transaction__SetLayerStack ||
+                    !f.SurfaceComposerClient__Transaction__Show ||
+                    !f.SurfaceComposerClient__Transaction__Reparent ||
+                    !f.SurfaceComposerClient__Transaction__SetLayer ||
+                    !f.SurfaceComposerClient__Transaction__SetMatrix ||
+                    !f.SurfaceComposerClient__Transaction__SetPosition ||
+                    !f.SurfaceComposerClient__Transaction__Apply ||
+                    !source.data || width <= 0 || height <= 0)
+                    return false;
+
+                if (sourceWidth <= 0 || sourceHeight <= 0) {
+                    sourceWidth = width;
+                    sourceHeight = height;
+                }
+
+                int32_t rootWidth = sourceWidth;
+                int32_t rootHeight = sourceHeight;
+                if (orientation == 1 || orientation == 3)
+                    std::swap(rootWidth, rootHeight);
+                auto root = CreateSurface((std::string("ImGuiMirrorRoot@") + std::to_string(layerStack)).c_str(),
+                                          rootWidth, rootHeight, false);
+                if (!root.data) {
+                    __android_log_print(ANDROID_LOG_ERROR, "ImGui", "[mirror] root creation failed, layerStack=%u", layerStack);
+                    return false;
+                }
+
+                StrongPointer<void> rootPtr{root.data};
+                SurfaceComposerClientTransaction transaction;
+                transaction.SetLayerStack(rootPtr, layerStack);
+                transaction.SetLayer(rootPtr, std::numeric_limits<int32_t>::max());
+                transaction.Show(rootPtr);
+                transaction.Apply(false, true);
+
+                auto mirror = f.SurfaceComposerClient__MirrorSurface(data, source.data, root.data);
+                if (!mirror.get()) {
+                    root.DisConnect();
+                    f.RefBase__DecStrong(root.data, this);
+                    return false;
+                }
+
+                StrongPointer<void> mirrorPtr{mirror.get()};
+                transaction.SetLayerStack(mirrorPtr, layerStack);
+                transaction.Show(mirrorPtr);
+                transaction.Reparent(mirrorPtr, rootPtr);
+
+                const float targetWidth = static_cast<float>(std::min(width, height));
+                const float targetHeight = static_cast<float>(std::max(width, height));
+                float scaleX = targetWidth / static_cast<float>(sourceWidth);
+                float scaleY = targetHeight / static_cast<float>(sourceHeight);
+                int scaleIndex = 0;
+                if (scaleX <= scaleY) {
+                    scaleY = scaleX;
+                    scaleIndex = 1;
+                } else {
+                    scaleX = scaleY;
+                    scaleIndex = 2;
+                }
+
+                const bool offset = (orientation == 1 || orientation == 3) &&
+                                    targetHeight != static_cast<float>(width);
+                float dsdx = scaleX;
+                float dtdx = 0.0f;
+                float dtdy = 0.0f;
+                float dsdy = scaleY;
+                float positionX = 0.0f;
+                float positionY = 0.0f;
+                switch ((orientation % 4 + 4) % 4) {
+                    case 1:
+                        dsdx = 0.0f;
+                        dtdx = scaleY;
+                        dtdy = -scaleX;
+                        dsdy = 0.0f;
+                        break;
+                    case 2:
+                        dsdx = -scaleX;
+                        dsdy = -scaleY;
+                        break;
+                    case 3:
+                        dsdx = 0.0f;
+                        dtdx = -scaleY;
+                        dtdy = scaleX;
+                        dsdy = 0.0f;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (offset) {
+                    switch ((orientation % 4 + 4) % 4) {
+                        case 0:
+                            if (scaleIndex == 1)
+                                positionY = (height - sourceHeight * scaleY) / 2.0f;
+                            else
+                                positionX = (width - sourceWidth * scaleX) / 2.0f;
+                            break;
+                        case 1:
+                            if (scaleIndex == 1) {
+                                positionX = targetWidth - (targetWidth - sourceWidth * scaleY) / 2.0f;
+                            } else {
+                                positionX = targetWidth;
+                                positionY = (targetHeight - sourceHeight * scaleY) / 2.0f;
+                            }
+                            break;
+                        case 2:
+                            if (scaleIndex == 1) {
+                                positionX = targetWidth - (targetWidth - sourceWidth * scaleX) / 2.0f;
+                                positionY = targetHeight;
+                            } else {
+                                positionX = targetWidth;
+                                positionY = targetHeight - (targetHeight - sourceHeight * scaleY) / 2.0f;
+                            }
+                            break;
+                        case 3:
+                            if (scaleIndex == 1) {
+                                positionX = (targetWidth - sourceWidth * scaleX) / 2.0f;
+                                positionY = targetHeight;
+                            } else {
+                                positionY = sourceHeight - (targetHeight - sourceHeight * scaleX) / 2.0f;
+                            }
+                            break;
+                    }
+                } else {
+                    if (scaleIndex == 1) {
+                        if (orientation == 1 || orientation == 3)
+                            positionX = (targetHeight - sourceHeight * scaleY) / 2.0f;
+                        else
+                            positionY = (targetHeight - sourceHeight * scaleY) / 2.0f;
+                    } else {
+                        if (orientation == 1 || orientation == 3)
+                            positionY = (targetWidth - sourceWidth * scaleX) / 2.0f;
+                        else
+                            positionX = (targetWidth - sourceWidth * scaleX) / 2.0f;
+                    }
+                }
+
+                transaction.SetMatrix(mirrorPtr, dsdx, dtdx, dtdy, dsdy);
+                transaction.SetPosition(mirrorPtr, positionX, positionY);
+                transaction.Apply(false, true);
+
+                *mirrorOut = {mirror.get()};
+                *rootOut = root;
+                __android_log_print(ANDROID_LOG_INFO, "ImGui",
+                                    "[mirror] created layerStack=%u target=%dx%d source=%dx%d orientation=%d matrix=[%.3f %.3f %.3f %.3f] position=(%.1f,%.1f)",
+                                    layerStack, width, height, sourceWidth, sourceHeight, orientation,
+                                    dsdx, dtdx, dtdy, dsdy, positionX, positionY);
+                return true;
             }
         };
 
@@ -538,12 +787,211 @@ namespace android {
             if (it == m_cachedSurfaceControl.end())
                 return;
 
+            ClearMirrorSurfaces();
             m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<detail::Surface *>(nativeWindow));
             m_cachedSurfaceControl.erase(nativeWindow);
         }
 
+
+        static void ProcessMirrorDisplay() {
+            auto &f = detail::Functionals::GetInstance();
+            if (f.systemVersion < 13 || m_cachedSurfaceControl.empty())
+                return;
+
+            static auto lastProcess = std::chrono::steady_clock::time_point{};
+            const auto now = std::chrono::steady_clock::now();
+            if (lastProcess != std::chrono::steady_clock::time_point{} &&
+                now - lastProcess < std::chrono::seconds(1))
+                return;
+            lastProcess = now;
+
+            auto source = m_cachedSurfaceControl.begin();
+            if (!source->second.data)
+                return;
+
+            const auto dump = ReadDisplayDump();
+            const auto primaryDisplay = GetDisplayInfo();
+            int32_t primaryOrientation = primaryDisplay.orientation;
+
+            const int32_t mirrorSourceWidth = (primaryOrientation == 1 || primaryOrientation == 3)
+                    ? primaryDisplay.height : primaryDisplay.width;
+            const int32_t mirrorSourceHeight = (primaryOrientation == 1 || primaryOrientation == 3)
+                    ? primaryDisplay.width : primaryDisplay.height;
+
+            struct MirrorTarget {
+                uint32_t layerStack;
+                int32_t width;
+                int32_t height;
+            };
+            std::vector<MirrorTarget> targets;
+            size_t cursor = 0;
+            while (true) {
+                const auto device = dump.find("DisplayDeviceInfo", cursor);
+                if (device == std::string::npos)
+                    break;
+
+                const auto next = dump.find("DisplayDeviceInfo", device + 1);
+                const auto end = next == std::string::npos ? dump.size() : next;
+                const std::string_view block(dump.data() + device, end - device);
+                cursor = end;
+
+                const auto layerStack = ParseUnsignedField(block, "mCurrentLayerStack=");
+                const auto rect = ParseRectField(block, "mCurrentLayerStackRect=");
+                if (!layerStack || !rect || *layerStack == 0 || rect->first <= 0 || rect->second <= 0)
+                    continue;
+
+                targets.push_back({*layerStack, rect->first, rect->second});
+                continue;
+            }
+
+            cursor = 0;
+            while (true) {
+                const auto device = dump.find("DisplayDeviceInfo", cursor);
+                if (device == std::string::npos)
+                    break;
+
+                const auto next = dump.find("DisplayDeviceInfo", device + 1);
+                const auto end = next == std::string::npos ? dump.size() : next;
+                const std::string_view block(dump.data() + device, end - device);
+                cursor = end;
+
+                const auto layerStack = ParseUnsignedField(block, "mCurrentLayerStack=");
+                if (layerStack && *layerStack == 0) {
+                    if (const auto orientation = ParseUnsignedField(block, "mCurrentOrientation="))
+                        primaryOrientation = static_cast<int32_t>(*orientation);
+                    break;
+                }
+            }
+
+            std::unordered_map<uint32_t, bool> seen;
+            for (const auto &target : targets) {
+                const auto layerStack = target.layerStack;
+                const auto width = target.width;
+                const auto height = target.height;
+                seen[layerStack] = true;
+                auto mirror = m_mirrorSurfaces.find(layerStack);
+                if (mirror != m_mirrorSurfaces.end() &&
+                    (mirror->second.width != width || mirror->second.height != height ||
+                     mirror->second.orientation != primaryOrientation)) {
+                    ReleaseMirrorPair(mirror->second);
+                    m_mirrorSurfaces.erase(mirror);
+                    mirror = m_mirrorSurfaces.end();
+                }
+                if (mirror == m_mirrorSurfaces.end()) {
+                    MirrorSurfacePair pair{};
+                    if (GetComposerInstance().MirrorToLayerStack(source->second, layerStack,
+                                                                  width, height,
+                                                                  mirrorSourceWidth, mirrorSourceHeight,
+                                                                  primaryOrientation,
+                                                                  &pair.mirror, &pair.root)) {
+                        pair.width = width;
+                        pair.height = height;
+                        pair.orientation = primaryOrientation;
+                        m_mirrorSurfaces.emplace(layerStack, pair);
+                    }
+                }
+            }
+
+            for (auto it = m_mirrorSurfaces.begin(); it != m_mirrorSurfaces.end();) {
+                if (seen.find(it->first) == seen.end()) {
+                    ReleaseMirrorPair(it->second);
+                    it = m_mirrorSurfaces.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+
+        static size_t GetMirrorSurfaceCount() {
+            return m_mirrorSurfaces.size();
+        }
+
+        static void ClearMirrorSurfaces() {
+            for (auto &entry : m_mirrorSurfaces)
+                ReleaseMirrorPair(entry.second);
+            m_mirrorSurfaces.clear();
+        }
+
     private:
+            struct MirrorSurfacePair {
+                detail::SurfaceControl mirror{};
+                detail::SurfaceControl root{};
+                int32_t width = 0;
+                int32_t height = 0;
+                int32_t orientation = -1;
+            };
+
+        static std::string ReadDisplayDump() {
+            std::string result;
+            FILE *pipe = popen("dumpsys display", "r");
+            if (!pipe)
+                return result;
+
+            char buffer[512]{};
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+                result += buffer;
+            pclose(pipe);
+            return result;
+        }
+
+        static std::optional<uint32_t> ParseUnsignedField(std::string_view block, std::string_view key) {
+            const auto start = block.find(key);
+            if (start == std::string_view::npos)
+                return std::nullopt;
+            auto value = block.substr(start + key.size());
+            const auto end = value.find_first_of(" \t\r\n");
+            value = value.substr(0, end);
+            std::string text(value);
+            char *parseEnd = nullptr;
+            const auto parsed = std::strtoul(text.c_str(), &parseEnd, 10);
+            if (parseEnd == text.c_str() || *parseEnd != '\0')
+                return std::nullopt;
+            return static_cast<uint32_t>(parsed);
+        }
+
+        static std::optional<std::pair<int32_t, int32_t>> ParseRectField(std::string_view block, std::string_view key) {
+            const auto start = block.find(key);
+            if (start == std::string_view::npos)
+                return std::nullopt;
+            const auto value = block.substr(start + key.size());
+            const auto left = value.find('(');
+            const auto comma = value.find(',', left == std::string_view::npos ? 0 : left + 1);
+            const auto dash = value.find(" - ", comma == std::string_view::npos ? 0 : comma + 1);
+            const auto rightComma = value.find(',', dash == std::string_view::npos ? 0 : dash + 3);
+            if (left == std::string_view::npos || comma == std::string_view::npos ||
+                dash == std::string_view::npos || rightComma == std::string_view::npos)
+                return std::nullopt;
+            const auto heightEnd = value.find(')', rightComma + 1);
+            if (heightEnd == std::string_view::npos)
+                return std::nullopt;
+            const std::string widthText(value.substr(dash + 3, rightComma - dash - 3));
+            const std::string heightText(value.substr(rightComma + 1, heightEnd - rightComma - 1));
+            char *widthEnd = nullptr;
+            char *heightParseEnd = nullptr;
+            const auto width = std::strtol(widthText.c_str(), &widthEnd, 10);
+            const auto height = std::strtol(heightText.c_str(), &heightParseEnd, 10);
+            if (widthEnd == widthText.c_str() || *widthEnd != '\0' ||
+                heightParseEnd == heightText.c_str() || *heightParseEnd != '\0')
+                return std::nullopt;
+            return std::make_pair(static_cast<int32_t>(width), static_cast<int32_t>(height));
+        }
+
+        static void ReleaseMirrorPair(MirrorSurfacePair &pair) {
+            auto &f = detail::Functionals::GetInstance();
+            if (pair.mirror.data) {
+                f.SurfaceControl__DisConnect(pair.mirror.data);
+                f.RefBase__DecStrong(pair.mirror.data, &pair);
+                pair.mirror.data = nullptr;
+            }
+            if (pair.root.data) {
+                f.SurfaceControl__DisConnect(pair.root.data);
+                f.RefBase__DecStrong(pair.root.data, &pair);
+                pair.root.data = nullptr;
+            }
+        }
+
         inline static std::unordered_map<ANativeWindow *, detail::SurfaceControl> m_cachedSurfaceControl;
+        inline static std::unordered_map<uint32_t, MirrorSurfacePair> m_mirrorSurfaces;
     };
 }
 
