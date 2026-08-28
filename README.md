@@ -1,15 +1,12 @@
 # Android ImGui Vulkan
 
-一个面向 Android 原生环境的 Dear ImGui + Vulkan 悬浮 UI 示例。项目直接通过 Android NDK 构建 `arm64-v8a` 原生可执行文件，创建独立的 `ANativeWindow`，使用 Vulkan 渲染 ImGui，并把触摸事件转换为 ImGui 输入。
+一个面向 Android 原生环境的 Dear ImGui + Vulkan 绘制示例。项目直接通过 Android NDK 构建 `arm64-v8a` 原生可执行文件，创建独立的 `ANativeWindow`，使用 Vulkan 渲染 ImGui，并把触摸事件转换为 ImGui 输入。
 
-项目同时提供高版本 Android 的 SurfaceComposer 兼容适配：普通截图和系统录屏可以捕捉 ImGui Surface；检测到额外的非零 layer stack 时，会创建 mirror layer 并按物理显示尺寸、逻辑显示尺寸和屏幕方向进行变换。
-
-如有版权或侵权问题，请联系 `2010362008@qq.com`。
-
-[加入 QQ 群](https://qun.qq.com/universal-share/share?ac=1&authKey=9ZUuM1MRQ%2BXuVah0FE%2FEMeovEj%2FBlr4iINJqlLz9adp2mdM5ShnV2FwFIOvnlG%2Fa&busi_data=eyJncm91cENvZGUiOiIxMTA1MzQ0NzA3IiwidG9rZW4iOiJNZXRQdi94dnc3UkNMMWs3dEZNNW5DbXpSQWUyK1FaUFZVcjNBTEZxcC9zaWEwaGdRbktGUDY5YVk4RlZPK1VPIiwidWluIjoiMjAxMDM2MjAwOCJ9&data=odFAPYLlHQIp07X7V_hh2MGleYPxyWZbWssULFpvH3p_bgC-q6cU_drPE-I6H9Zy0WU35GjnrnAzZwG1i7lsig&svctype=4&tempid=h5_group_info)
+如有侵权 请联系2010362008@qq.com
+[q群](https://qun.qq.com/universal-share/share?ac=1&authKey=9ZUuM1MRQ%2BXuVah0FE%2FEMeovEj%2FBlr4iINJqlLz9adp2mdM5ShnV2FwFIOvnlG%2Fa&busi_data=eyJncm91cENvZGUiOiIxMTA1MzQ0NzA3IiwidG9rZW4iOiJNZXRQdi94dnc3UkNMMWs3dEZNNW5DbXpSQWUyK1FaUFZVcjNBTEZxcC9zaWEwaGdRbktGUDY5YVk4RlZPK1VPIiwidWluIjoiMjAxMDM2MjAwOCJ9&data=odFAPYLlHQIp07X7V_hh2MGleYPxyWZbWssULFpvH3p_bgC-q6cU_drPE-I6H9Zy0WU35GjnrnAzZwG1i7lsig&svctype=4&tempid=h5_group_info)
 
 > [!IMPORTANT]
-> 这是 NDK 原生可执行项目，不是 Gradle/Android Studio APK 工程。当前构建脚本会生成 `libs/arm64-v8a/Android_imgui_Vulkan.rc`。运行时通常需要 root/shell 特权访问 SurfaceFlinger 和 `/dev/input`；只有启用触摸注入模式时才需要 `/dev/uinput`。
+> 这是 NDK 原生可执行项目，不是 Gradle/Android Studio APK 工程。当前构建脚本会生成 `libs/arm64-v8a/Android_imgui_Vulkan.rc`，运行时通常需要 root 权限才能访问 SurfaceFlinger 相关接口、`/dev/input` 和 `/dev/uinput`。
 
 ![Android](https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&logoColor=white)
 ![Vulkan](https://img.shields.io/badge/Renderer-Vulkan-AC162C?logo=vulkan&logoColor=white)
@@ -26,10 +23,7 @@
 - 通过 `imgui_impl_vulkan` 将 Dear ImGui 绘制命令提交到 Vulkan command buffer。
 - 通过 `ANativeWindowCreator` 动态解析 `libgui.so`/`libutils.so` 的符号，并创建独立 Surface。
 - 按 Android 系统版本选择 SurfaceComposer 兼容符号，覆盖 Android 9+，并针对 Android 9、10、11、12、14、15、16、17 提供符号适配表。
-- Android 16 使用 `WindowInfoHandle` 设置 `NO_INPUT_CHANNEL` 和 `ALLOW`，让 ImGui Surface 可显示、可捕捉，同时不拦截底层应用触摸。
-- 默认被动监听 `/dev/input/event*`，不执行 `EVIOCGRAB`，底层应用仍可收到原始触摸事件；注入模式保留 `/dev/uinput` 支持。
-- Android 13+ 支持通过 `mirrorSurface`、layer stack、matrix 和 position 将 ImGui Surface 镜像到额外显示目标。
-- 镜像计算区分逻辑横屏尺寸和 SurfaceFlinger 物理尺寸，处理横竖屏旋转、缩放和窗口位置偏移。
+- 监听 `/dev/input/event*`，解析多点触摸事件，并通过 `/dev/uinput` 创建虚拟触摸设备。
 - 处理屏幕旋转、窗口尺寸变化和 swapchain 重建。
 - 内置中文黑体、Font Awesome 图标字体和 JPEG 图片资源。
 - 支持从文件、内存和 GIF 内存数据加载纹理。
@@ -52,9 +46,6 @@ flowchart LR
     ui[draw_Gui.cpp] --> imgui
     io --> imgui
     imgui --> surface
-    surface --> capture[截图 / 系统录屏]
-    surface --> mirror[Mirror layer / layer stack]
-    mirror --> capture
 ~~~
 
 启动后的主循环位于 `jni/src/main.cpp`：
@@ -64,62 +55,6 @@ flowchart LR
 3. 创建 ImGui context、Android 输入后端和字体/纹理资源。
 4. 每帧执行 `NewFrame()`、`Layout_tick_UI()`、`EndFrame()`。
 5. 退出时销毁纹理、ImGui context、Vulkan 资源和 Surface。
-
-## 录屏、镜像和触摸
-
-### 普通截图和系统录屏
-
-ImGui 使用可捕捉的普通 Surface，不设置 `skipScreenshot` 或 trusted overlay。系统截图和普通系统录屏可以直接捕捉 ImGui 内容，不需要额外显示器。
-
-### 额外 layer stack 镜像
-
-Android 13 及以上版本如果出现非零 `mCurrentLayerStack`，`ANativeWindowCreator::ProcessMirrorDisplay()` 会执行以下流程：
-
-1. 从 `dumpsys display` 读取目标 layer stack 的矩形和方向。
-2. 创建 mirror root，并通过 `SurfaceComposerClient::mirrorSurface()` 镜像 ImGui Surface。
-3. 使用 `setLayerStack()`、`setMatrix()` 和 `setPosition()` 调整目标方向、缩放和位置。
-4. 录屏目标消失或尺寸变化时释放并重建对应 mirror layer。
-
-镜像计算使用两套尺寸：ImGui/Vulkan 使用逻辑显示尺寸，SurfaceComposer 缩放使用物理显示尺寸。这样在横屏设备上拖动到右下角的 ImGui 窗口不会被错误缩放到中间区域。
-
-### 触摸透传
-
-当前主循环使用被动触摸模式：
-
-~~~cpp
-Touch::Init({static_cast<float>(abs_ScreenX),
-             static_cast<float>(abs_ScreenY)}, true);
-~~~
-
-`true` 表示只读监听。程序读取物理触摸事件并更新 `ImGuiIO`，不独占 `/dev/input`，因此底层应用仍可以接收屏幕触摸。Android 16 的输入窗口元数据也设置为 `NO_INPUT_CHANNEL + ALLOW`，避免 ImGui Surface 生成输入通道或阻挡底层窗口。
-
-如果需要切换到注入模式，把第二个参数改为 `false`；该模式需要 `/dev/uinput` 权限，并可能独占原始输入设备。
-
-### 设备侧验证
-
-~~~powershell
-# 截图
-adb exec-out screencap -p > screenshot.png
-
-# 普通录屏，文件先写入 root 可访问目录
-adb shell su -c 'screenrecord --time-limit 10 /data/local/tmp/imgui.mp4'
-adb shell su -c 'chmod 644 /data/local/tmp/imgui.mp4'
-adb pull /data/local/tmp/imgui.mp4 .
-
-# 查看 Surface、镜像和触摸日志
-adb logcat -s ImGui Vulkan AndroidRuntime
-adb shell dumpsys display
-adb shell dumpsys SurfaceFlinger
-~~~
-
-正常情况下可以看到类似日志：
-
-~~~text
-[input-window] ... touch=2 config=0x1 submitted=1
-[touch] passive=true devices=1
-~~~
-
-当存在额外 layer stack 时，还会出现 `[mirror] created layerStack=...` 日志。
 
 ## 环境要求
 
@@ -175,41 +110,6 @@ adb shell chmod 755 /data/local/tmp/Android_imgui_Vulkan.rc
 adb shell su -c '/data/local/tmp/Android_imgui_Vulkan.rc'
 ~~~
 
-### CMake / CLion
-
-项目根目录提供 `CMakeLists.txt`，使用 Android NDK toolchain 构建同一个 `arm64-v8a` 原生可执行文件。命令行配置示例：
-
-~~~powershell
-$env:ANDROID_NDK_HOME = "D:\Android\Sdk\ndk\27.0.12077973"
-$toolchain = "$env:ANDROID_NDK_HOME\build\cmake\android.toolchain.cmake"
-
-cmake -S . -B obj/cmake-clion -G Ninja `
-    -DCMAKE_TOOLCHAIN_FILE="$toolchain" `
-    -DANDROID_ABI=arm64-v8a `
-    -DANDROID_PLATFORM=android-22 `
-    -DCMAKE_BUILD_TYPE=Release
-
-cmake --build obj/cmake-clion --parallel 4
-~~~
-
-构建产物仍然输出到：
-
-~~~text
-libs/arm64-v8a/Android_imgui_Vulkan.rc
-~~~
-
-在 CLion 中打开项目根目录，然后在 `Settings | Build, Execution, Deployment | CMake` 新建一个 Android 配置：
-
-| 配置项 | 值 |
-| --- | --- |
-| Generator | Ninja |
-| Toolchain file | `$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake` |
-| ABI | `arm64-v8a` |
-| Platform | `android-22` |
-| Build type | `Release` |
-
-CLion 的 Build 按钮会生成与 `ndk-build` 相同的可执行文件；推送和运行方式仍使用上面的 `adb` 命令。
-
 ## 构建配置
 
 构建入口是 `jni/Android.mk`，全局 NDK 配置位于 `jni/Application.mk`。
@@ -242,10 +142,9 @@ CLion 的 Build 按钮会生成与 `ndk-build` 相同的可执行文件；推送
 
 ~~~text
 .
-    ├── LICENSE
-    ├── README.md
-    ├── CMakeLists.txt                 # CLion/CMake 构建入口
-    └── jni
+├── LICENSE
+├── README.md
+└── jni
     ├── Android.mk                    # NDK 模块、编译选项和源文件清单
     ├── Application.mk                # ABI、API level 和 STL 配置
     ├── include
@@ -318,8 +217,6 @@ Touch::Init({static_cast<float>(abs_ScreenX),
 
 - `ANativeWindowCreator` 通过 `dlopen()`/`dlsym()` 访问 `/system/lib64/libgui.so` 和 `/system/lib64/libutils.so`，依赖 Android 内部符号，厂商 ROM 改名或裁剪符号时可能创建 Surface 失败。
 - 代码按 `ro.build.version.release` 选择符号表；实际可用性仍取决于设备 Android 版本、厂商实现和进程权限。
-- Android 16 使用 `WindowInfoHandle` 的运行时符号设置输入窗口元数据；缺少对应符号时会保留普通 Surface 路径，但无法启用该版本的输入透传适配。
-- Android 13+ 的 mirror layer 依赖 `mirrorSurface`、`setLayerStack`、`setMatrix`、`setPosition` 和 `reparent` 符号；没有额外 layer stack 时不会创建镜像层。
 - `skipScreenshot`/穿透开关会重新创建窗口，并尝试恢复之前的 ImGui 窗口位置和尺寸。
 - Vulkan swapchain 在窗口尺寸或旋转变化后重建；当前实现会等待约 500 ms 以避开屏幕切换瞬间的无效尺寸。
 - 当前 `Application.mk` 只构建 `arm64-v8a`，32 位设备不会生成可运行产物。
@@ -360,12 +257,11 @@ adb logcat -s ImGui AndroidRuntime
 ### 触摸没有响应
 
 ~~~powershell
-adb shell su -c 'ls -l /dev/input/event*'
+adb shell su -c 'ls -l /dev/input/event* /dev/uinput'
 adb shell su -c 'getevent -lp'
-adb logcat -s ImGui
 ~~~
 
-默认模式应看到 `[touch] passive=true`，并且不会执行 `EVIOCGRAB`。只有切换到注入模式时，才需要检查 `/dev/uinput` 权限。某些设备的输入节点权限由厂商策略额外限制。
+确认进程具备读取输入设备、创建 uinput 设备以及执行 `EVIOCGRAB` 的权限。某些设备的输入节点权限由厂商策略额外限制。
 
 ### 画面空白或旋转后错位
 
@@ -388,7 +284,7 @@ Dear ImGui、stb_image 和 Font Awesome 的许可条款请以各自上游文件�
 & "D:\Android\Sdk\ndk\27.0.12077973\ndk-build.cmd" -j4
 ~~~
 
-已验证 `ndk-build` 和 CMake 两套构建流程的 `arm64-v8a` 全量 C/C++ 编译与链接，产物均为 `libs/arm64-v8a/Android_imgui_Vulkan.rc`。Android 16 arm64 设备已验证 Surface 创建、Vulkan 渲染、截图、普通录屏、横屏坐标和被动触摸透传；其他 ROM 仍需按上面的 adb 命令进行设备侧验证。
+已验证 `arm64-v8a` 全量 C/C++ 编译、链接和安装步骤通过，产物为 `libs/arm64-v8a/Android_imgui_Vulkan.rc`。物理设备上的 Surface、Vulkan 驱动和触摸行为取决于具体 ROM/权限，需要按上面的 adb 命令进行设备侧验证。
 
 ## License
 
