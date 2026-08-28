@@ -91,10 +91,6 @@ void screen_config() {
     if (next_display_info.width > 0 && next_display_info.height > 0) {
         ::displayInfo = next_display_info;
     }
-
-    // Keep the existing high-version SurfaceComposer adapter and mirror the
-    // ImGui layer to any additional display layer stacks discovered by dumpsys.
-    android::ANativeWindowCreator::ProcessMirrorDisplay();
     
     lastTime = std::chrono::steady_clock::now();
 }
