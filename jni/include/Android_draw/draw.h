@@ -42,7 +42,7 @@ extern bool permeate_record_ini;
 
 
 extern void screen_config();// 获取屏幕信息
-extern void drawBegin();// 布局UI
+extern bool drawBegin();// 布局UI
 extern void Layout_tick_UI(bool *main_thread_flag);
 extern void init_My_drawdata();// 初始化绘制数据
 extern void release_My_drawdata();// 释放 GIF 帧索引与延迟数据

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <thread>
 
+#include <android/log.h>
+
 #include "draw.h"
 #include "embedded_assets.h"
 #include "fontawesome-brands.h"
@@ -66,6 +68,7 @@ void init_My_drawdata() {
     ImGui::StyleColorsLight(); //白色
     M_Android_LoadFont(25.0f); //加载项目内置黑体与图标
     ImGui::GetStyle().ScaleAllSizes(3.25f);
+    ImGui::GetStyle().WindowBorderSize = 0.0f;
     ::picture_image = graphics->LoadTextureFromMemory(
             const_cast<unsigned char *>(g_picture_jpg_start),
             static_cast<int>(EmbeddedAssets::PictureSize()));
@@ -92,10 +95,10 @@ void screen_config() {
         ::displayInfo = next_display_info;
     }
 
-    // Keep the existing high-version SurfaceComposer adapter and mirror the
-    // ImGui layer to any additional display layer stacks discovered by dumpsys.
-    android::ANativeWindowCreator::ProcessMirrorDisplay();
-    
+    if (::window != nullptr) {
+        android::ANativeWindowCreator::ProcessMirrorDisplay();
+    }
+
     lastTime = std::chrono::steady_clock::now();
 }
 
@@ -120,7 +123,7 @@ static void limit_gui_frame_rate() {
     }
 }
 
-void drawBegin() {
+bool drawBegin() {
     limit_gui_frame_rate();
     screen_config();
 
@@ -148,6 +151,10 @@ void drawBegin() {
         graphics->Shutdown();
         android::ANativeWindowCreator::Destroy(::window);
         ::window = android::ANativeWindowCreator::Create("test_sysGui", native_window_screen_x, native_window_screen_y, permeate_record);
+        if (::window == nullptr) {
+            __android_log_print(ANDROID_LOG_ERROR, "ImGui", "[-] 重建 Surface 失败，结束渲染循环");
+            return false;
+        }
         graphics->Init_Render(::window, native_window_screen_x, native_window_screen_y);
         ::init_My_drawdata(); //初始化绘制数据
         ::g_window = nullptr;
@@ -162,6 +169,10 @@ void drawBegin() {
         orientation = displayInfo.orientation;
         Touch::setOrientation(displayInfo.orientation);
     }
+
+    android::ANativeWindowCreator::SetMirrorEnabled(!::permeate_record);
+
+    return true;
 }
 
 
